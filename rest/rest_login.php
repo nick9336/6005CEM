@@ -4,27 +4,32 @@ include '../components/connect.php';
 
 session_start();
 
-if(isset($_POST['submit'])){
+if (isset($_POST['submit'])) {
+    $name = $_POST['name'];
+    $pass = $_POST['pass'];
 
-   $name = $_POST['name'];
-   $name = filter_var($name, FILTER_SANITIZE_STRING);
-   $pass = $_POST['pass'];
-   $pass = filter_var($pass, FILTER_SANITIZE_STRING);
+    $select_rest = $conn->prepare("SELECT id, password FROM `rest` WHERE name = ?");
+    $select_rest->execute([$name]);
 
-   $select_rest = $conn->prepare("SELECT * FROM `rest` WHERE name = ? AND password = ?");
-   $select_rest->execute([$name, $pass]);
-   
-   if($select_rest->rowCount() > 0){
-      $fetch_rest_id = $select_rest->fetch(PDO::FETCH_ASSOC);
-      $_SESSION['rest_id'] = $fetch_rest_id['id'];
-      header('location:dashboard.php');
-   }else{
-      $message[] = 'Incorrect username or password!';
-   }
+    if ($select_rest->rowCount() > 0) {
+        $fetch_rest = $select_rest->fetch(PDO::FETCH_ASSOC);
+        $hashed_password = $fetch_rest['password'];
 
+        if (password_verify($pass, $hashed_password)) {
+            $_SESSION['rest_id'] = $fetch_rest['id'];
+            session_regenerate_id(true); // Regenerate session ID
+            header('location: dashboard.php');
+        } else {
+            $message[] = 'Incorrect username or password!';
+        }
+    } else {
+        $message[] = 'Incorrect username or password!';
+    }
 }
 
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
