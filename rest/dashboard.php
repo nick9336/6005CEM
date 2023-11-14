@@ -109,17 +109,6 @@ if(!isset($rest_id)){
 
    <div class="box">
       <?php
-         $select_rest = $conn->prepare("SELECT * FROM `rest`");
-         $select_rest->execute();
-         $numbers_of_rests = $select_rest->rowCount();
-      ?>
-      <h3><?= $numbers_of_rests; ?></h3>
-      <p>Accounts</p>
-   </div>
-
-
-   <div class="box">
-      <?php
          $select_messages = $conn->prepare("SELECT * FROM `messages`");
          $select_messages->execute();
          $numbers_of_messages = $select_messages->rowCount();
