@@ -10,12 +10,24 @@ if(!isset($admin_id)){
    header('location:admin_login.php');
 }
 
-if(isset($_GET['delete'])){
+if (isset($_GET['delete'])) {
    $delete_id = $_GET['delete'];
-   $delete_message = $conn->prepare("DELETE FROM `messages` WHERE id = ?");
-   $delete_message->execute([$delete_id]);
-   header('location:messages.php');
+
+   // CSRF protection
+   if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+       $delete_message = $conn->prepare("DELETE FROM `messages` WHERE id = ?");
+       $delete_message->execute([$delete_id]);
+       header('location:messages.php');
+   } else {
+       // Invalid CSRF token, handle accordingly (e.g., show an error message)
+       echo 'Invalid CSRF Token';
+       exit;
+   }
 }
+
+// Generate CSRF token
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
 
 ?>
 
@@ -47,24 +59,26 @@ if(isset($_GET['delete'])){
    <div class="box-container">
 
    <?php
-      $select_messages = $conn->prepare("SELECT * FROM `messages`");
-      $select_messages->execute();
-      if($select_messages->rowCount() > 0){
-         while($fetch_messages = $select_messages->fetch(PDO::FETCH_ASSOC)){
-   ?>
-   <div class="box">
-      <p> name : <span><?= $fetch_messages['name']; ?></span> </p>
-      <p> number : <span><?= $fetch_messages['number']; ?></span> </p>
-      <p> email : <a href="mailto:<?= $fetch_messages['email']; ?>"><?= $fetch_messages['email']; ?></a> </p>
-      <p> message : <span><?= $fetch_messages['message']; ?></span> </p>
-      <a href="messages.php?delete=<?= $fetch_messages['id']; ?>" class="delete-btn" onclick="return confirm('delete this message?');">delete</a>
-   </div>
-   <?php
-         }
-      }else{
-         echo '<p class="empty">you have no messages</p>';
-      }
-   ?>
+        $select_messages = $conn->prepare("SELECT * FROM `messages`");
+        $select_messages->execute();
+        if ($select_messages->rowCount() > 0) {
+            while ($fetch_messages = $select_messages->fetch(PDO::FETCH_ASSOC)) {
+                ?>
+                <div class="box">
+                    <p> name : <span><?= $fetch_messages['name']; ?></span> </p>
+                    <p> number : <span><?= $fetch_messages['number']; ?></span> </p>
+                    <p> email : <a href="mailto:<?= $fetch_messages['email']; ?>"><?= $fetch_messages['email']; ?></a>
+                    </p>
+                    <p> message : <span><?= $fetch_messages['message']; ?></span> </p>
+                    <a href="messages.php?delete=<?= $fetch_messages['id']; ?>&token=<?= $csrf_token ?>"
+                       class="delete-btn" onclick="return confirm('Delete this message?');">delete</a>
+                </div>
+                <?php
+            }
+        } else {
+            echo '<p class="empty">you have no messages</p>';
+        }
+        ?>
 
    </div>
 

@@ -85,11 +85,9 @@ for ($month = 1; $month <= 12; $month++) {
             $total_sales = $total_completes + $total_pendings;
 
             ?>
-            <h3><span>RM</span><?= $total_sales; ?></h3>
+            <h3><span>RM</span><?= htmlspecialchars($total_sales); ?></h3>
             <p>Total Sales</p>
          </div>
-
-
 
          <div class="box">
             <?php
@@ -97,7 +95,7 @@ for ($month = 1; $month <= 12; $month++) {
             $select_users->execute();
             $numbers_of_users = $select_users->rowCount();
             ?>
-            <h3><?= $numbers_of_users; ?></h3>
+            <h3><?= htmlspecialchars($numbers_of_users); ?></h3>
             <p>Users</p>
          </div>
 
@@ -107,10 +105,9 @@ for ($month = 1; $month <= 12; $month++) {
             $select_orders->execute();
             $numbers_of_orders = $select_orders->rowCount();
             ?>
-            <h3><?= $numbers_of_orders; ?></h3>
+            <h3><?= htmlspecialchars($numbers_of_orders); ?></h3>
             <p>Total Orders</p>
          </div>
-
 
          <div class="box">
             <?php
@@ -118,41 +115,34 @@ for ($month = 1; $month <= 12; $month++) {
             $select_reservations->execute();
             $numbers_of_reservations = $select_reservations->rowCount();
             ?>
-            <h3><?= $numbers_of_reservations; ?></h3>
+            <h3><?= htmlspecialchars($numbers_of_reservations); ?></h3>
             <p>Total Reservations</p>
          </div>
 
-         
          <div class="box">
             <?php
             $select_rest = $conn->prepare("SELECT * FROM `rest`");
             $select_rest->execute();
             $numbers_of_rests = $select_rest->rowCount();
             ?>
-            <h3><?= $numbers_of_rests; ?></h3>
+            <h3><?= htmlspecialchars($numbers_of_rests); ?></h3>
             <p>Employees</p>
          </div>
 
       </div>
 
       <div class="box-container" style="padding:30px 0px 0px 0px;">
-      
          <div class="box">
             <h1 class="heading">Graph - Number of orders for each month</h1>
-
             <canvas id="myChart"></canvas>
          </div>
-
       </div>
 
       <div class="box-container" style="padding:30px 0px 0px 0px;">
-      
          <div class="box">
             <h1 class="heading">Graph - Number of reservations for each month</h1>
-
             <canvas id="myChart2"></canvas>
          </div>
-
       </div>
 
    </section>
@@ -164,7 +154,7 @@ for ($month = 1; $month <= 12; $month++) {
 
    <script>
       //graph 1
-      var monthsData = <?= json_encode($monthsData); ?>;
+      var monthsData = <?= json_encode(array_map('htmlspecialchars', $monthsData, array_fill(0, count($monthsData), ENT_QUOTES))); ?>;
       
       // Get the canvas element
       var ctx = document.getElementById('myChart').getContext('2d');
@@ -196,7 +186,7 @@ for ($month = 1; $month <= 12; $month++) {
       });
 
       //graph 2
-      var monthsRes = <?= json_encode($monthsRes); ?>;
+      var monthsRes = <?= json_encode(array_map('htmlspecialchars', $monthsRes, array_fill(0, count($monthsRes), ENT_QUOTES))); ?>;
 
       // Get the canvas element
       var ctx2 = document.getElementById('myChart2').getContext('2d');
