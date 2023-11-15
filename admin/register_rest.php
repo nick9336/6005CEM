@@ -10,6 +10,8 @@ if(!isset($admin_id)){
    header('location:admin_login.php');
 };
 
+
+
 if (isset($_POST['submit'])) {
    $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
    $pass = $_POST['pass'];

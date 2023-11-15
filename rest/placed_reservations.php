@@ -20,12 +20,6 @@ if(isset($_POST['update_reservation'])){
 
 }
 
-if(isset($_GET['delete'])){
-   $delete_id = $_GET['delete'];
-   $delete_reservation = $conn->prepare("DELETE FROM `reservations` WHERE id = ?");
-   $delete_reservation->execute([$delete_id]);
-   header('location:placed_reservations.php');
-}
 
 ?>
 
@@ -78,7 +72,6 @@ if(isset($_GET['delete'])){
          </select>
          <div class="flex-btn">
             <input type="submit" value="update" class="btn" name="update_reservation">
-            <a href="placed_reservations.php?delete=<?= $fetch_reservations['id']; ?>" class="delete-btn" onclick="return confirm('delete this reservation?');">delete</a>
          </div>
       </form>
    </div>

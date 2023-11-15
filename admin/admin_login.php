@@ -4,24 +4,33 @@ include '../components/connect.php';
 
 session_start();
 
+
+
 if(isset($_POST['submit'])){
-
-   $name = $_POST['name'];
-   $name = filter_var($name, FILTER_SANITIZE_STRING);
+   $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
    $pass = $_POST['pass'];
-   $pass = filter_var($pass, FILTER_SANITIZE_STRING);
 
-   $select_admin = $conn->prepare("SELECT * FROM `admin` WHERE name = ? AND password = ?");
-   $select_admin->execute([$name, $pass]);
-   
+   $select_admin = $conn->prepare("SELECT id, password FROM `admin` WHERE name = ?");
+   $select_admin->execute([$name]);
+
    if($select_admin->rowCount() > 0){
-      $fetch_admin_id = $select_admin->fetch(PDO::FETCH_ASSOC);
-      $_SESSION['admin_id'] = $fetch_admin_id['id'];
-      header('location:dashboard.php');
-   }else{
+      $fetch_admin = $select_admin->fetch(PDO::FETCH_ASSOC);
+      $hashed_password = $fetch_admin['password'];
+
+      // Verify the password
+      if (password_verify($pass, $hashed_password)) {
+         // Regenerate session ID
+         session_regenerate_id(true);
+
+         // Set session variable
+         $_SESSION['admin_id'] = $fetch_admin['id'];
+         header('location:dashboard.php');
+      } else {
+         $message[] = 'Incorrect username or password!';
+      }
+   } else {
       $message[] = 'Incorrect username or password!';
    }
-
 }
 
 ?>
@@ -39,7 +48,6 @@ if(isset($_POST['submit'])){
 
    <!-- custom css file link  -->
    <link rel="stylesheet" href="../css/admin_style.css">
-
 </head>
 <body>
 
@@ -59,27 +67,15 @@ if(isset($message)){
 <!-- admin login form section starts  -->
 
 <section class="form-container">
-
    <form action="" method="POST">
       <h3>Admin Panel Login</h3>
       <input type="text" name="name" maxlength="20" required placeholder="Admin Username" class="box" oninput="this.value = this.value.replace(/\s/g, '')">
       <input type="password" name="pass" maxlength="20" required placeholder="Admin Password" class="box" oninput="this.value = this.value.replace(/\s/g, '')">
       <input type="submit" value="login now" name="submit" class="btn">
    </form>
-
 </section>
 
 <!-- admin login form section ends -->
-
-
-
-
-
-
-
-
-
-
 
 </body>
 </html>

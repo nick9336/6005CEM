@@ -20,12 +20,6 @@ if(isset($_POST['update_payment'])){
 
 }
 
-if(isset($_GET['delete'])){
-   $delete_id = $_GET['delete'];
-   $delete_order = $conn->prepare("DELETE FROM `orders` WHERE id = ?");
-   $delete_order->execute([$delete_id]);
-   header('location:placed_orders.php');
-}
 
 ?>
 
@@ -64,7 +58,7 @@ if(isset($_GET['delete'])){
    ?>
    <div class="box">
       <p> Date Placed on : <span><?= $fetch_orders['placed_on']; ?></span> </p>
-      <p> Name : <span><?= $rest_id; ?></span> </p>
+      <p> Name : <span><?= $fetch_orders['name']; ?></span> </p>
       <p> Email : <span><?= $fetch_orders['email']; ?></span> </p>
       <p> Number : <span><?= $fetch_orders['number']; ?></span> </p>
       <p> Total price : <span>RM<?= $fetch_orders['total_price']; ?>/-</span> </p>
@@ -78,7 +72,6 @@ if(isset($_GET['delete'])){
          </select>
          <div class="flex-btn">
             <input type="submit" value="update" class="btn" name="update_payment">
-            <a href="placed_orders.php?delete=<?= $fetch_orders['id']; ?>" class="delete-btn" onclick="return confirm('delete this order?');">delete</a>
          </div>
       </form>
    </div>

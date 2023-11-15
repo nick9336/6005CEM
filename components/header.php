@@ -19,10 +19,11 @@ if(isset($message)){
 
       <nav class="navbar">
          <a href="dashboard.php">Home</a>
-         <a href="users_accounts.php">Users</a>
          <a href="placed_orders.php">Orders</a>
          <a href="placed_reservations.php">Reservations</a>
-         <a href="rest_accounts.php">Accounts</a>
+         <a href="users_accounts.php">Users</a>
+         <a href="rest_accounts.php">Employees</a>
+         <a href="messages.php">Messages</a>
       </nav>
 
       <div class="icons">

@@ -6,6 +6,7 @@ session_start();
 $admin_id = $_SESSION['admin_id'];
 
 if (!isset($admin_id)) {
+   session_regenerate_id(true);
    header('location:admin_login.php');
 }
 

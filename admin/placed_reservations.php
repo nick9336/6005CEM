@@ -69,6 +69,18 @@ if(isset($_GET['delete'])){
       <p> Email : <span><?= $fetch_reservations['email']; ?></span> </p>
       <p> Number : <span><?= $fetch_reservations['contact_no']; ?></span> </p>
       <p> Pax : <span><?= $fetch_reservations['pax']; ?></span> </p>
+      <form action="" method="POST">
+         <input type="hidden" name="reservation_id" value="<?= $fetch_reservations['id']; ?>">
+         <select name="reservation_status" class="drop-down">
+            <option value="" selected disabled><?= $fetch_reservations['reservation_status']; ?></option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+         </select>
+         <div class="flex-btn">
+            <input type="submit" value="update" class="btn" name="update_reservation">
+            <a href="placed_reservations.php?delete=<?= $fetch_reservations['id']; ?>" class="delete-btn" onclick="return confirm('delete this reservation?');">delete</a>
+         </div>
+      </form>
    </div>
    <?php
       }
