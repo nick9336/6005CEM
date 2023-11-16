@@ -1,39 +1,58 @@
+<!--security added
+1.csrf_token
+2.session 
+3.htmlspecialchars
+4.validation
+
+-->
+
 <?php
 
 include 'components/connect.php';
 
 session_start();
 
+// Generate CSRF token
+if (empty($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if(isset($_SESSION['user_id'])){
-   $user_id = $_SESSION['user_id'];
-}else{
-   $user_id = '';
-   header('location:login.php');
-};
-
-if(isset($_POST['delete'])){
-   $cart_id = $_POST['cart_id'];
-   $delete_cart_item = $conn->prepare("DELETE FROM `cart` WHERE id = ?");
-   $delete_cart_item->execute([$cart_id]);
-   $message[] = 'cart item deleted!';
+  $user_id = $_SESSION['user_id'];
+} else {
+  $user_id = '';
+  header('location:login.php');
+  exit;
 }
 
-if(isset($_POST['delete_all'])){
-   $delete_cart_item = $conn->prepare("DELETE FROM `cart` WHERE user_id = ?");
-   $delete_cart_item->execute([$user_id]);
-   // header('location:cart.php');
-   $message[] = 'deleted all from cart!';
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+   if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+       die("CSRF token validation failed");
+   }
 
-if(isset($_POST['update_qty'])){
-   $cart_id = $_POST['cart_id'];
-   $qty = $_POST['qty'];
-   $qty = filter_var($qty, FILTER_SANITIZE_STRING);
-   $update_qty = $conn->prepare("UPDATE `cart` SET quantity = ? WHERE id = ?");
-   $update_qty->execute([$qty, $cart_id]);
-   $message[] = 'cart quantity updated';
-}
+   if(isset($_POST['delete'])){
+      $cart_id = $_POST['cart_id'];
+      $delete_cart_item = $conn->prepare("DELETE FROM `cart` WHERE id = ?");
+      $delete_cart_item->execute([$cart_id]);
+      $message[] = 'cart item deleted!';
+   }
 
+   if(isset($_POST['delete_all'])){
+      $delete_cart_item = $conn->prepare("DELETE FROM `cart` WHERE user_id = ?");
+      $delete_cart_item->execute([$user_id]);
+      // header('location:cart.php');
+      $message[] = 'deleted all from cart!';
+   }
+
+   if(isset($_POST['update_qty'])){
+      $cart_id = $_POST['cart_id'];
+      $qty = $_POST['qty'];
+      $qty = filter_var($qty, FILTER_SANITIZE_STRING);
+      $update_qty = $conn->prepare("UPDATE `cart` SET quantity = ? WHERE id = ?");
+      $update_qty->execute([$qty, $cart_id]);
+      $message[] = 'cart quantity updated';
+   }
+}
 $grand_total = 0;
 
 ?>
@@ -80,17 +99,18 @@ $grand_total = 0;
             while($fetch_cart = $select_cart->fetch(PDO::FETCH_ASSOC)){
       ?>
       <form action="" method="post" class="box">
-         <input type="hidden" name="cart_id" value="<?= $fetch_cart['id']; ?>">
-         <a href="quick_view.php?pid=<?= $fetch_cart['pid']; ?>" class="fas fa-eye"></a>
+         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
+         <input type="hidden" name="cart_id" value="<?= htmlspecialchars($fetch_cart['id']); ?>">
+         <a href="quick_view.php?pid=<?= htmlspecialchars($fetch_cart['pid']); ?>" class="fas fa-eye"></a>
          <button type="submit" class="fas fa-times" name="delete" onclick="return confirm('delete this item?');"></button>
-         <img src="uploaded_img/<?= $fetch_cart['image']; ?>" alt="">
-         <div class="name"><?= $fetch_cart['name']; ?></div>
+         <img src="uploaded_img/<?= htmlspecialchars($fetch_cart['image']); ?>" alt="">
+         <div class="name"><?= htmlspecialchars($fetch_cart['name']); ?></div>
          <div class="flex">
-            <div class="price"><span>RM</span><?= $fetch_cart['price']; ?></div>
-            <input type="number" name="qty" class="qty" min="1" max="99" value="<?= $fetch_cart['quantity']; ?>" maxlength="2">
+            <div class="price"><span>RM</span><?= htmlspecialchars($fetch_cart['price']); ?></div>
+            <input type="number" name="qty" class="qty" min="1" max="99" value="<?= htmlspecialchars($fetch_cart['quantity']); ?>" maxlength="2">
             <button type="submit" class="fas fa-edit" name="update_qty"></button>
          </div>
-         <div class="sub-total"> sub total : <span>RM<?= $sub_total = ($fetch_cart['price'] * $fetch_cart['quantity']); ?>/-</span> </div>
+         <div class="sub-total"> sub total : <span>RM<?= $sub_total = (htmlspecialchars($fetch_cart['price']) * htmlspecialchars($fetch_cart['quantity'])); ?>/-</span> </div>
       </form>
       <?php
                $grand_total += $sub_total;

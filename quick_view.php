@@ -1,14 +1,26 @@
+
+<!--security added-->
 <?php
 
 include 'components/connect.php';
 
 session_start();
+if (empty($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+//sesssion regenearate id to prevent fixation attacks
+if (!isset($_SESSION['initiated'])) {
+   session_regenerate_id();
+   $_SESSION['initiated'] = true;
+}
 
+//session to check the user id 
 if(isset($_SESSION['user_id'])){
    $user_id = $_SESSION['user_id'];
-}else{
+} else {
    $user_id = '';
-};
+}
+
 
 include 'components/add_cart.php';
 
@@ -45,15 +57,16 @@ include 'components/add_cart.php';
          while($fetch_products = $select_products->fetch(PDO::FETCH_ASSOC)){
    ?>
    <form action="" method="post" class="box">
-      <input type="hidden" name="pid" value="<?= $fetch_products['id']; ?>">
-      <input type="hidden" name="name" value="<?= $fetch_products['name']; ?>">
-      <input type="hidden" name="price" value="<?= $fetch_products['price']; ?>">
-      <input type="hidden" name="image" value="<?= $fetch_products['image']; ?>">
-      <img src="uploaded_img/<?= $fetch_products['image']; ?>" alt="">
-      <a href="category.php?category=<?= $fetch_products['category']; ?>" class="cat"><?= $fetch_products['category']; ?></a>
-      <div class="name"><?= $fetch_products['name']; ?></div>
+      <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+      <input type="hidden" name="pid" value="<?= htmlspecialchars($fetch_products['id']); ?>">
+      <input type="hidden" name="name" value="<?= htmlspecialchars($fetch_products['name']); ?>">
+      <input type="hidden" name="price" value="<?= htmlspecialchars($fetch_products['price']); ?>">
+      <input type="hidden" name="image" value="<?= htmlspecialchars($fetch_products['image']); ?>">
+      <img src="uploaded_img/<?= htmlspecialchars($fetch_products['image']); ?>" alt="">
+      <a href="category.php?category=<?= htmlspecialchars($fetch_products['category']); ?>" class="cat"><?= htmlspecialchars($fetch_products['category']); ?></a>
+      <div class="name"><?= htmlspecialchars($fetch_products['name']); ?></div>
       <div class="flex">
-         <div class="price"><span>RM</span><?= $fetch_products['price']; ?></div>
+         <div class="price"><span>RM</span><?= htmlspecialchars($fetch_products['price']); ?></div>
          <input type="number" name="qty" class="qty" min="1" max="99" value="1" maxlength="2">
       </div>
       <button type="submit" name="add_to_cart" class="cart-btn">add to cart</button>
@@ -93,3 +106,6 @@ include 'components/add_cart.php';
 
 </body>
 </html>
+
+
+<!--security added-->

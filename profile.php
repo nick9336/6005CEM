@@ -1,3 +1,7 @@
+<!--security added
+
+
+-->
 <?php
 
 include 'components/connect.php';
@@ -9,6 +13,12 @@ if(isset($_SESSION['user_id'])){
 }else{
    $user_id = '';
    header('location:home.php');
+};
+
+
+if (!isset($_SESSION['initiated'])) {
+   session_regenerate_id();
+   $_SESSION['initiated'] = true;
 };
 
 ?>
@@ -35,19 +45,15 @@ if(isset($_SESSION['user_id'])){
 <!-- header section ends -->
 
 <section class="user-details">
-
    <div class="user">
-      <?php
-         
-      ?>
       <img src="images/user-icon.png" alt="">
-      <p><i class="fas fa-user"></i><span><span><?= $fetch_profile['name']; ?></span></span></p>
-      <p><i class="fas fa-phone"></i><span><?= $fetch_profile['number']; ?></span></p>
-      <p><i class="fas fa-envelope"></i><span><?= $fetch_profile['email']; ?></span></p>
+      <p><i class="fas fa-user"></i><span><?= htmlspecialchars($fetch_profile['name']); ?></span></p>
+      <p><i class="fas fa-phone"></i><span><?= htmlspecialchars($fetch_profile['number']); ?></span></p>
+      <p><i class="fas fa-envelope"></i><span><?= htmlspecialchars($fetch_profile['email']); ?></span></p>
       <a href="update_profile.php" class="btn">update info</a>
    </div>
-
 </section>
+
 
 
 
