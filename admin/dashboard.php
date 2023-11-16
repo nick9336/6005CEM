@@ -129,6 +129,16 @@ for ($month = 1; $month <= 12; $month++) {
             <p>Employees</p>
          </div>
 
+         <div class="box">
+            <?php
+            $select_message = $conn->prepare("SELECT * FROM `messages`");
+            $select_message->execute();
+            $numbers_of_messages = $select_message->rowCount();
+            ?>
+            <h3><?= htmlspecialchars($numbers_of_messages); ?></h3>
+            <p>Messages</p>
+         </div>
+
       </div>
 
       <div class="box-container" style="padding:30px 0px 0px 0px;">
