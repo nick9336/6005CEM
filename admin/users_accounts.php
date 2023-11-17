@@ -11,16 +11,33 @@ if (!isset($admin_id)) {
     exit; // Ensure script stops execution after redirect
 }
 
-if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    $delete_users = $conn->prepare("DELETE FROM `users` WHERE id = ?");
-    $delete_users->execute([$delete_id]);
-    $delete_order = $conn->prepare("DELETE FROM `orders` WHERE user_id = ?");
-    $delete_order->execute([$delete_id]);
-    $delete_cart = $conn->prepare("DELETE FROM `cart` WHERE user_id = ?");
-    $delete_cart->execute([$delete_id]);
-    header('location:users_accounts.php');
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+
+if (isset($_GET['delete'])) {
+   $delete_id = $_GET['delete'];
+
+   // CSRF protection
+   if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+      $delete_users = $conn->prepare("DELETE FROM `users` WHERE id = ?");
+      $delete_users->execute([$delete_id]);
+      $delete_order = $conn->prepare("DELETE FROM `orders` WHERE user_id = ?");
+      $delete_order->execute([$delete_id]);
+      $delete_cart = $conn->prepare("DELETE FROM `cart` WHERE user_id = ?");
+      $delete_cart->execute([$delete_id]);
+      header('location:users_accounts.php');       
+   } else {
+
+       echo 'Invalid CSRF Token';
+       exit;
+   }
+}
+
+// Generate CSRF token
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
 
 ?>
 
@@ -65,7 +82,8 @@ if (isset($_GET['delete'])) {
                         <p> Contact : <span><?= htmlspecialchars($fetch_accounts['number']); ?></span> </p>
 
                         <div class="flex-btn">
-                            <a href="users_accounts.php?delete=<?= $fetch_accounts['id']; ?>" class="delete-btn" onclick="return confirm('delete this account?');">delete</a>
+                        <a href="users_accounts.php?delete=<?= $fetch_accounts['id']; ?>&token=<?= $csrf_token ?>"
+                                 class="delete-btn" onclick="return confirm('Delete this account?');">delete</a>
                         </div>
                     </div>
             <?php

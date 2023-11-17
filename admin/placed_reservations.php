@@ -10,6 +10,10 @@ if (!isset($admin_id)) {
    header('location:admin_login.php');
 };
 
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['update_reservation'])) {
 
    $reservation_id = $_POST['reservation_id'];
@@ -22,10 +26,23 @@ if (isset($_POST['update_reservation'])) {
 
 if (isset($_GET['delete'])) {
    $delete_id = $_GET['delete'];
-   $delete_reservation = $conn->prepare("DELETE FROM `reservations` WHERE id = ?");
-   $delete_reservation->execute([$delete_id]);
-   header('location:placed_reservations.php');
+
+   // CSRF protection
+   if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+       $delete_reservations = $conn->prepare("DELETE FROM `reservations` WHERE id = ?");
+       $delete_reservations->execute([$delete_id]);
+       header('location:placed_reservations.php');
+   } else {
+
+       echo 'Invalid CSRF Token';
+       exit;
+   }
 }
+
+// Generate CSRF token
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
+
 
 ?>
 
@@ -79,7 +96,8 @@ if (isset($_GET['delete'])) {
                      </select>
                      <div class="flex-btn">
                         <input type="submit" value="update" class="btn" name="update_reservation">
-                        <a href="placed_reservations.php?delete=<?= htmlspecialchars($fetch_reservations['id']); ?>" class="delete-btn" onclick="return confirm('delete this reservation?');">delete</a>
+                        <a href="placed_reservations.php?delete=<?= $fetch_reservations['id']; ?>&token=<?= $csrf_token ?>"
+                                 class="delete-btn" onclick="return confirm('Delete this reservation?');">delete</a>
                      </div>
                   </form>
                </div>

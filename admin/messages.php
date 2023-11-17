@@ -10,6 +10,10 @@ if(!isset($admin_id)){
    header('location:admin_login.php');
 }
 
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_GET['delete'])) {
    $delete_id = $_GET['delete'];
 
@@ -19,7 +23,7 @@ if (isset($_GET['delete'])) {
        $delete_message->execute([$delete_id]);
        header('location:messages.php');
    } else {
-       // Invalid CSRF token, handle accordingly (e.g., show an error message)
+
        echo 'Invalid CSRF Token';
        exit;
    }

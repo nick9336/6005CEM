@@ -2,16 +2,33 @@
 include '../components/connect.php';
 session_start();
 $admin_id = $_SESSION['admin_id'];
+
 if (!isset($admin_id)) {
     header('location:admin_login.php');
 }
 
-if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    $delete_rest = $conn->prepare("DELETE FROM `rest` WHERE id = ?");
-    $delete_rest->execute([$delete_id]);
-    header('location:rest_accounts.php');
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+if (isset($_GET['delete'])) {
+   $delete_id = $_GET['delete'];
+
+   // CSRF protection
+   if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+       $delete_rest = $conn->prepare("DELETE FROM `rest` WHERE id = ?");
+       $delete_rest->execute([$delete_id]);
+       header('location:rest_accounts.php');
+   } else {
+
+       echo 'Invalid CSRF Token';
+       exit;
+   }
+}
+
+// Generate CSRF token
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
 ?>
 
 <!DOCTYPE html>
@@ -58,8 +75,8 @@ if (isset($_GET['delete'])) {
                     <p> Username : <span><?= htmlspecialchars($fetch_accounts['name']); ?></span> </p>
                     <div class="flex-btn">
                         <!-- Delete Button with Confirmation -->
-                        <a href="rest_accounts.php?delete=<?= htmlspecialchars($fetch_accounts['id']); ?>"
-                           class="delete-btn" onclick="return confirm('delete this account?');">delete</a>
+                        <a href="rest_accounts.php?delete=<?= $fetch_accounts['id']; ?>&token=<?= $csrf_token ?>"
+                                 class="delete-btn" onclick="return confirm('Delete this account?');">delete</a>
                     </div>
                 </div>
                 <?php

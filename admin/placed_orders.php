@@ -10,22 +10,41 @@ if (!isset($admin_id)) {
     header('location:admin_login.php');
 }
 
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['update_payment'])) {
 
-    $order_id = $_POST['order_id'];
-    $payment_status = $_POST['payment_status'];
-    $update_status = $conn->prepare("UPDATE `orders` SET payment_status = ? WHERE id = ?");
-    $update_status->execute([$payment_status, $order_id]);
-    $message[] = 'Payment status updated!';
+   $order_id = $_POST['order_id'];
+   $payment_status = $_POST['payment_status'];
 
+   $update_status = $conn->prepare("UPDATE `orders` SET payment_status = ? WHERE id = ?");
+   $update_status->execute([$payment_status, $order_id]);
+   $message[] = 'Payment status updated!';
 }
+
 
 if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    $delete_order = $conn->prepare("DELETE FROM `orders` WHERE id = ?");
-    $delete_order->execute([$delete_id]);
-    header('location:placed_orders.php');
+   $delete_id = $_GET['delete'];
+
+   // CSRF protection
+   if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+       $delete_orders = $conn->prepare("DELETE FROM `orders` WHERE id = ?");
+       $delete_orders->execute([$delete_id]);
+       header('location:placed_orders.php');
+   } else {
+
+       echo 'Invalid CSRF Token';
+       exit;
+   }
 }
+
+// Generate CSRF token
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
+
+
 
 ?>
 
@@ -80,7 +99,8 @@ if (isset($_GET['delete'])) {
                             </select>
                             <div class="flex-btn">
                                 <input type="submit" value="update" class="btn" name="update_payment">
-                                <a href="placed_orders.php?delete=<?= htmlspecialchars($fetch_orders['id'], ENT_QUOTES, 'UTF-8'); ?>" class="delete-btn" onclick="return confirm('delete this order?');">delete</a>
+                                <a href="placed_orders.php?delete=<?= $fetch_orders['id']; ?>&token=<?= $csrf_token ?>"
+                                 class="delete-btn" onclick="return confirm('Delete this order?');">delete</a>
                             </div>
                         </form>
                     </div>

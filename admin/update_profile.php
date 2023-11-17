@@ -20,7 +20,7 @@ if (isset($_POST['submit'])) {
    if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
       // Invalid CSRF token, handle accordingly
       exit('Invalid CSRF token');
-  }
+  } 
 
     $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
 

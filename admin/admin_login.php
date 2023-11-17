@@ -4,7 +4,17 @@ include '../components/connect.php';
 
 session_start();
 
+if (!isset($_SESSION['csrf_token'])) {
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['submit'])) {
+
+   if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+      // Invalid CSRF token, handle accordingly
+      exit('Invalid CSRF token');
+  } 
+
     $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
     $pass = $_POST['pass'];
 
@@ -33,6 +43,9 @@ if (isset($_POST['submit'])) {
         // For enhanced security, consider delaying the response to thwart brute force attacks
         $message[] = 'Invalid username or password.';
     }
+
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
 }
 
 ?>
@@ -72,6 +85,8 @@ if (isset($_POST['submit'])) {
 
     <section class="form-container">
         <form action="" method="POST">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
             <h3>Admin Panel Login</h3>
             <input type="text" name="name" maxlength="20" required placeholder="Admin Username" class="box"
                 oninput="this.value = this.value.replace(/\s/g, '')">
