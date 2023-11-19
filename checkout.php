@@ -55,7 +55,7 @@ if(isset($_POST['submit'])){
             $mail->SMTPSecure = 'ssl';
             $mail->Port = 465;
         
-            $mail->setFrom('tengteng8132002@gmail.com');
+            $mail->setFrom('tengteng8132002@gmail.com', 'Savoury Spoon');
         
             $mail->addAddress($_POST["email"]);
         
@@ -71,7 +71,7 @@ if(isset($_POST['submit'])){
                 Thank You for Your ordering!';
         
                 if ($mail->send()){
-                  echo 'success';
+                  header('location:orders.php');
               }
 
       

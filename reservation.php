@@ -125,17 +125,16 @@ if(isset($_SESSION['user_id'])){
                      $insert_res = $conn->prepare("INSERT INTO reservations (user_id, name, placed_on, time_placed, pax, contact_no, email, reservation_status)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                         $insert_res->execute([$user_id, $username, $place_on, $time_place, $pax, $contact_no, $email, 'Pending']);
-                        $message[] = 'Reservation Made!';
 
                         $mail = new PHPMailer();
                         $mail->isSMTP();
                         $mail->Host = 'smtp.gmail.com';
                         $mail->SMTPAuth = true;
-                        $mail->Username = 'jackleeleow@gmail.com';
-                        $mail->Password = 'piwmdkmynleqejvn';
+                        $mail->Username = 'tengteng8132002@gmail.com';
+                        $mail->Password = 'zzvmemdazozxzadq';
                         $mail->SMTPSecure = 'ssl';
                         $mail->Port = 465;
-                        $mail->setFrom('jackleeleow@gmail.com');
+                        $mail->setFrom('tengteng8132002@gmail.com', 'Savoury Spoon');
                         $mail->addAddress($_POST["email"]);
                         $mail->isHTML(true);
                         $mail->Subject = 'The Savoury Spoon Reservation Made!';
@@ -146,7 +145,10 @@ if(isset($_SESSION['user_id'])){
                         Your Contact Number: ' . $contact_no . '<br/>
                         Number of Pax: ' . $pax . '<br/><br/>
                         Thank You for Your Reservation!';
-                        $mail->send();
+
+                        if ($mail->send()){
+                           header('location:history.php');
+                       }
                      }
                       // Display errors if there are any
                      foreach ($errors as $error) {
