@@ -19,6 +19,10 @@ if(isset($_SESSION['user_id'])){
 };
 
 if(isset($_POST['submit'])){
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('CSRF token validation failed.');
+    }
 
    $name = $_POST['name'];
    $name = filter_var($name, FILTER_SANITIZE_STRING);
@@ -36,7 +40,6 @@ if(isset($_POST['submit'])){
 
    if($check_cart->rowCount() > 0){
 
-         
          $insert_order = $conn->prepare("INSERT INTO `orders`(user_id, name, number, email, method, total_products, total_price) VALUES(?,?,?,?,?,?,?)");
          $insert_order->execute([$user_id, $name, $number, $email, $method, $total_products, $total_price]);
 
@@ -45,42 +48,42 @@ if(isset($_POST['submit'])){
 
          $message[] = 'Order placed successfully!';
 
-            $mail = new PHPMailer();
+         $mail = new PHPMailer();
 
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'tengteng8132002@gmail.com';
-            $mail->Password = 'zzvmemdazozxzadq';
-            $mail->SMTPSecure = 'ssl';
-            $mail->Port = 465;
-        
-            $mail->setFrom('tengteng8132002@gmail.com', 'Savoury Spoon');
-        
-            $mail->addAddress($_POST["email"]);
-        
-            $mail->isHTML(true);
-        
-            $mail->Subject = 'The Savoury Spoon Order Placed!';
-                $mail->Body = 'Dear '.$name.', <br/><br/>
-                Your Number : '.$number.'<br/>
-                Your Email : '.$email.'<br/>
-                Your Payment Method : '.$method.'<br/>
-                Your Total Products : '.$total_products.'<br/>
-                Your Price : RM'.$total_price.'<br/><br/>
-                Thank You for Your ordering!';
-        
-                if ($mail->send()){
-                  header('location:orders.php');
-              }
+         $mail->isSMTP();
+         $mail->Host = 'smtp.gmail.com';
+         $mail->SMTPAuth = true;
+         $mail->Username = 'tengteng8132002@gmail.com';
+         $mail->Password = 'zzvmemdazozxzadq';
+         $mail->SMTPSecure = 'ssl';
+         $mail->Port = 465;
 
-      
+         $mail->setFrom('tengteng8132002@gmail.com');
+
+         $mail->addAddress($_POST["email"]);
+
+         $mail->isHTML(true);
+
+         $mail->Subject = 'The Savoury Spoon Order Placed!';
+         $mail->Body = 'Dear '.$name.', <br/><br/>
+            Your Number : '.$number.'<br/>
+            Your Email : '.$email.'<br/>
+            Your Payment Method : '.$method.'<br/>
+            Your Total Products : '.$total_products.'<br/>
+            Your Price : RM'.$total_price.'<br/><br/>
+            Thank You for Your ordering!';
+
+        if ($mail->send()){
+            echo 'success';
+        }
    }else{
-      $message[] = 'your cart is empty';
+      $message[] = 'Your cart is empty';
    }
 }
 
-
+// Generate and store a new CSRF token in the session
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
 
 ?>
 
@@ -134,13 +137,14 @@ if(isset($_POST['submit'])){
       <?php
             }
          }else{
-            echo '<p class="empty">your cart is empty!</p>';
+            echo '<p class="empty">Your cart is empty!</p>';
          }
       ?>
       <p class="grand-total"><span class="name">Grand total :</span><span class="price">RM<?= $grand_total; ?></span></p>
       <a href="cart.php" class="btn">View cart</a>
    </div>
 
+   <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
    <input type="hidden" name="total_products" value="<?= $total_products; ?>">
    <input type="hidden" name="total_price" value="<?= $grand_total; ?>" value="">
    <input type="hidden" name="name" value="<?= $fetch_profile['name'] ?>">
@@ -160,25 +164,16 @@ if(isset($_POST['submit'])){
          <option value="credit card">Credit card</option>
          <option value="paypal">Paypal</option>
       </select>
-      <input type="submit" id="submit' value="place order" class="btn" style="width:100%; background:var(--red); color:var(--white);" name="submit">
+      <input type="submit" id="submit" value="place order" class="btn" style="width:100%; background:var(--red); color:var(--white);" name="submit">
    </div>
 
 </form>
    
 </section>
 
-
-
-
-
 <!-- footer section starts  -->
 <?php include 'components/footer.php'; ?>
 <!-- footer section ends -->
-
-
-
-
-
 
 <!-- custom js file link  -->
 <script src="js/script.js"></script>

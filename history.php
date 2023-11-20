@@ -4,6 +4,11 @@ include 'components/connect.php';
 
 session_start();
 
+//A new CSRF token is generated and stored in the session
+
+$csrf_token = bin2hex(random_bytes(32));
+$_SESSION['csrf_token'] = $csrf_token;
+
 if(isset($_SESSION['user_id'])){
    $user_id = $_SESSION['user_id'];
 }else{
@@ -61,8 +66,7 @@ if(isset($_SESSION['user_id'])){
       <p>Email : <span><?= $fetch_reservations['email']; ?></span></p>
       <p>Contact No : <span><?= $fetch_reservations['contact_no']; ?></span></p>
       <p>Number of Pax : <span><?= $fetch_reservations['pax']; ?></span></p>
-      <p>Reservation status : <span style="color:<?php if($fetch_reservations['reservation_status'] == 'pending'){ echo 'red'; }else{ echo 'green'; }; ?>"><?= $fetch_reservations['reservation_status']; ?></span> </p>
-
+      <p>Reservation status : <span><?= $fetch_reservations['reservation_status']; ?></span></p>
      
       
    </div>
