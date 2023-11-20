@@ -230,7 +230,15 @@ if(isset($_POST['submit'])){if (!isset($_POST['csrf_token']) || $_POST['csrf_tok
 
 
       <input type="submit" value="register now" name="submit" class="btn">
+     
+
+
       <p>already have an account? <a href="login.php">login now</a></p>
+
+      <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+      
+      <label for="agreeTerms" style="font-size: 15px;">I agree to the <a href="terms.php" style="font-size: 15px;text-decoration:underline;">Terms and Conditions</a></label>
+      
    </form>
 
 </section>
