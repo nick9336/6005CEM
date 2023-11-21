@@ -1,22 +1,28 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
 
 $rest_id = $_SESSION['rest_id'];
 
-if(!isset($rest_id)){
-   header('location:rest_login.php');
+if (!isset($rest_id)) {
+    header('location:rest_login.php');
 }
 
-if(isset($_GET['delete'])){
-   $delete_id = $_GET['delete'];
-   $delete_message = $conn->prepare("DELETE FROM `messages` WHERE id = ?");
-   $delete_message->execute([$delete_id]);
-   header('location:messages.php');
-}
+if (isset($_GET['delete'])) {
+    $delete_id = filter_var($_GET['delete'], FILTER_VALIDATE_INT);
 
+    if ($delete_id === false) {
+         echo "<script> alert('Message Could Not Delete !'); </script>";
+        header('location: messages.php');
+        exit();
+    }
+
+    $delete_message = $conn->prepare("DELETE FROM `messages` WHERE id = ?");
+    $delete_message->execute([$delete_id]);
+    echo "<script> alert('Message is Successfully Deleted !'); </script>";
+    header('location: messages.php');
+}
 ?>
 
 <!DOCTYPE html>

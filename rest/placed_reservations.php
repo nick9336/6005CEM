@@ -6,20 +6,23 @@ session_start();
 
 $rest_id = $_SESSION['rest_id'];
 
-if(!isset($rest_id)){
-   header('location:rest_login.php');
-};
-
-if(isset($_POST['update_reservation'])){
-
-   $reservation_id = $_POST['reservation_id'];
-   $reservation_status = $_POST['reservation_status'];
-   $update_status = $conn->prepare("UPDATE `reservations` SET reservation_status = ? WHERE id = ?");
-   $update_status->execute([$reservation_status, $reservation_id]);
-   $message[] = 'reservation status updated!';
-
+if (!isset($rest_id)) {
+    header('location:rest_login.php');
 }
 
+if (isset($_POST['update_reservation'])) {
+    $reservation_id = filter_var($_POST['reservation_id'], FILTER_VALIDATE_INT);
+    $reservation_status = filter_var($_POST['reservation_status'], FILTER_SANITIZE_STRING);
+
+    if ($reservation_id === false || empty($reservation_status)) {
+        // Invalid input, handle the error (log, redirect, etc.)
+        $message[] = 'Invalid input. Please check your data.';
+    } else {
+        $update_status = $conn->prepare("UPDATE `reservations` SET reservation_status = ? WHERE id = ?");
+        $update_status->execute([$reservation_status, $reservation_id]);
+        $message[] = 'Reservation status updated!';
+    }
+}
 
 ?>
 

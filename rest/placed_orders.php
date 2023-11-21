@@ -6,20 +6,23 @@ session_start();
 
 $rest_id = $_SESSION['rest_id'];
 
-if(!isset($rest_id)){
-   header('location:rest_login.php');
-};
-
-if(isset($_POST['update_payment'])){
-
-   $order_id = $_POST['order_id'];
-   $payment_status = $_POST['payment_status'];
-   $update_status = $conn->prepare("UPDATE `orders` SET payment_status = ? WHERE id = ?");
-   $update_status->execute([$payment_status, $order_id]);
-   $message[] = 'Payment status updated!';
-
+if (!isset($rest_id)) {
+    header('location:rest_login.php');
 }
 
+if (isset($_POST['update_payment'])) {
+    $order_id = filter_var($_POST['order_id'], FILTER_VALIDATE_INT);
+    $payment_status = filter_var($_POST['payment_status'], FILTER_SANITIZE_STRING);
+
+    if ($order_id === false || empty($payment_status)) {
+        // Invalid input, handle the error (log, redirect, etc.)
+        $message[] = 'Invalid input. Please check your data.';
+    } else {
+        $update_status = $conn->prepare("UPDATE `orders` SET payment_status = ? WHERE id = ?");
+        $update_status->execute([$payment_status, $order_id]);
+        $message[] = 'Payment status updated!';
+    }
+}
 
 ?>
 

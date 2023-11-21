@@ -1,10 +1,20 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
 
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['submit'])) {
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        // Token mismatch, handle accordingly (e.g., log the attempt, show an error)
+        die("CSRF token mismatch");
+    }
+
     $name = $_POST['name'];
     $pass = $_POST['pass'];
 
@@ -26,10 +36,7 @@ if (isset($_POST['submit'])) {
         $message[] = 'Incorrect username or password!';
     }
 }
-
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -62,29 +69,18 @@ if(isset($message)){
 ?>
 
 <!-- rest login form section starts  -->
-
 <section class="form-container">
-
    <form action="" method="POST">
+      <!-- Add CSRF Token input field -->
+      <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+      
       <h3>Restaurant Panel Login</h3>
       <input type="text" name="name" maxlength="20" required placeholder="Employee Username" class="box" oninput="this.value = this.value.replace(/\s/g, '')">
       <input type="password" name="pass" maxlength="20" required placeholder="Employee Password" class="box" oninput="this.value = this.value.replace(/\s/g, '')">
       <input type="submit" value="login now" name="submit" class="btn">
    </form>
-
 </section>
-
 <!-- rest login form section ends -->
-
-
-
-
-
-
-
-
-
-
 
 </body>
 </html>
