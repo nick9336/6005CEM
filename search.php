@@ -2,18 +2,23 @@
 
 include 'components/connect.php';
 
+function generateCSRFToken() {
+   $csrf_token = bin2hex(random_bytes(32));
+   $_SESSION['csrf_token'] = $csrf_token;
+}
+
 session_start();
 
-// Generate and store a new CSRF token in the session
-$csrf_token = bin2hex(random_bytes(32));
-$_SESSION['csrf_token'] = $csrf_token;
+// Generate and store a new CSRF token in the session if it doesn't exist
+if (!isset($_SESSION['csrf_token'])) {
+   generateCSRFToken();
+}
 
-if(isset($_SESSION['user_id'])){
+if (isset($_SESSION['user_id'])) {
    $user_id = $_SESSION['user_id'];
-}else{
+} else {
    $user_id = '';
-};
-
+}
 include 'components/add_cart.php';
 
 ?>
@@ -42,12 +47,14 @@ include 'components/add_cart.php';
 <!-- search form section starts  -->
 
 <section class="search-form">
-   <form method="post" action="">
-      <!-- Adding CSRF token input field -->
-      <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+   
+<form method="post" action="">
+   <!-- Adding CSRF token input field -->
+   <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
       <input type="text" name="search_box" placeholder="search items..." class="box">
       <button type="submit" name="search_btn" class="fas fa-search"></button>
    </form>
+
 </section>
 
 <!-- search form section ends -->
@@ -59,8 +66,9 @@ include 'components/add_cart.php';
 
       <?php
          if(isset($_POST['search_box']) OR isset($_POST['search_btn'])){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Validate CSRF token
-            if (isset($_POST['csrf_token']) && $_POST['csrf_token'] === $_SESSION['csrf_token']) {
+            if (isset($_POST['csrf_token']) && hash_equals($_POST['csrf_token'], $_SESSION['csrf_token'])) {
                $search_box = $_POST['search_box'];
                $select_products = $conn->prepare("SELECT * FROM `products` WHERE name LIKE '%{$search_box}%'");
                $select_products->execute();
@@ -89,8 +97,9 @@ include 'components/add_cart.php';
                }
             } else {
                echo '<p class="empty">CSRF token validation failed!</p>';
-            }
+           }
          }
+       }
       ?>
 
    </div>

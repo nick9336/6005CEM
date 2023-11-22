@@ -41,7 +41,7 @@ if(isset($_SESSION['user_id'])){
 
 <div class="heading">
    <h3>Reservation History</h3>
-   <p><a href="html.php">home</a> <span> / Reservation History</span></p>
+   <p><a href="home.php">home</a> <span> / Reservation History</span></p>
 </div>
 
 <section class="history">

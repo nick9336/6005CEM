@@ -30,11 +30,11 @@ if (isset($_POST['submit'])) {
     $pass = $_POST['pass'];
     $pass = filter_var($pass, FILTER_SANITIZE_STRING);
 
-    $select_user = $conn->prepare("SELECT * FROM `users` WHERE email = ? AND password = ?");
-    $select_user->execute([$email, $pass]);
+    $select_user = $conn->prepare("SELECT * FROM `users` WHERE email = ?");
+    $select_user->execute([$email]);
     $row = $select_user->fetch(PDO::FETCH_ASSOC);
 
-    if ($select_user->rowCount() > 0) {
+    if ($select_user->rowCount() > 0 && password_verify($pass, $row['password'])) {
         $_SESSION['user_id'] = $row['id'];
         header('location:home.php');
     } else {

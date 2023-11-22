@@ -2,22 +2,28 @@
 
 include 'components/connect.php';
 
+function generateCSRFToken() {
+   $csrf_token = bin2hex(random_bytes(32));
+   $_SESSION['csrf_token'] = $csrf_token;
+}
+
 session_start();
 
-// Generate and store a new CSRF token in the session
-$csrf_token = bin2hex(random_bytes(32));
-$_SESSION['csrf_token'] = $csrf_token;
+// Generate and store a new CSRF token in the session if it doesn't exist
+if (!isset($_SESSION['csrf_token'])) {
+   generateCSRFToken();
+}
 
-if(isset($_SESSION['user_id'])){
+if (isset($_SESSION['user_id'])) {
    $user_id = $_SESSION['user_id'];
-}else{
+} else {
    $user_id = '';
-};
+}
 
 if(isset($_POST['send'])){
    
    // Validate CSRF token
-   if (isset($_POST['csrf_token']) && $_POST['csrf_token'] === $_SESSION['csrf_token']) {
+if (isset($_POST['csrf_token']) && hash_equals($_POST['csrf_token'], $_SESSION['csrf_token'])) {
    
       $name = $_POST['name'];
       $name = filter_var($name, FILTER_SANITIZE_STRING);
@@ -89,7 +95,7 @@ if(isset($_POST['send'])){
       <form action="" method="post">
          <h3>tell us something!</h3>
          <!-- Adding CSRF token input field -->
-         <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
          <input type="text" name="name" maxlength="50" class="box" placeholder="enter your name" required>
          <input type="number" name="number" min="0" max="9999999999" class="box" placeholder="enter your number" required maxlength="10">
          <input type="email" name="email" maxlength="50" class="box" placeholder="enter your email" required>
