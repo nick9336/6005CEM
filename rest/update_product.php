@@ -1,5 +1,4 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
@@ -8,44 +7,55 @@ $rest_id = $_SESSION['rest_id'];
 
 if(!isset($rest_id)){
    header('location:rest_login.php');
-};
+}
+
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 if(isset($_POST['update'])){
+   if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+       // CSRF token is not valid, handle the error (log, redirect, etc.)
+       $message[] = 'Invalid CSRF token. Please try again.';
+   } else {
+       $pid = $_POST['pid'];
+       $pid = filter_var($pid, FILTER_SANITIZE_STRING);
+       $name = $_POST['name'];
+       $name = filter_var($name, FILTER_SANITIZE_STRING);
+       $price = $_POST['price'];
+       $price = filter_var($price, FILTER_SANITIZE_STRING);
+       $category = $_POST['category'];
+       $category = filter_var($category, FILTER_SANITIZE_STRING);
 
-   $pid = $_POST['pid'];
-   $pid = filter_var($pid, FILTER_SANITIZE_STRING);
-   $name = $_POST['name'];
-   $name = filter_var($name, FILTER_SANITIZE_STRING);
-   $price = $_POST['price'];
-   $price = filter_var($price, FILTER_SANITIZE_STRING);
-   $category = $_POST['category'];
-   $category = filter_var($category, FILTER_SANITIZE_STRING);
+       $update_product = $conn->prepare("UPDATE `products` SET name = ?, category = ?, price = ? WHERE id = ?");
+       $update_product->execute([$name, $category, $price, $pid]);
 
-   $update_product = $conn->prepare("UPDATE `products` SET name = ?, category = ?, price = ? WHERE id = ?");
-   $update_product->execute([$name, $category, $price, $pid]);
+       $message[] = 'Product updated!';
 
-   $message[] = 'product updated!';
+       $old_image = $_POST['old_image'];
+       $image = $_FILES['image']['name'];
+       $image = filter_var($image, FILTER_SANITIZE_STRING);
+       $image_size = $_FILES['image']['size'];
+       $image_tmp_name = $_FILES['image']['tmp_name'];
+       $image_folder = '../uploaded_img/'.$image;
 
-   $old_image = $_POST['old_image'];
-   $image = $_FILES['image']['name'];
-   $image = filter_var($image, FILTER_SANITIZE_STRING);
-   $image_size = $_FILES['image']['size'];
-   $image_tmp_name = $_FILES['image']['tmp_name'];
-   $image_folder = '../uploaded_img/'.$image;
-
-   if(!empty($image)){
-      if($image_size > 2000000){
-         $message[] = 'Images size is too large!';
-      }else{
-         $update_image = $conn->prepare("UPDATE `products` SET image = ? WHERE id = ?");
-         $update_image->execute([$image, $pid]);
-         move_uploaded_file($image_tmp_name, $image_folder);
-         unlink('../uploaded_img/'.$old_image);
-         $message[] = 'Image updated!';
-      }
+       if(!empty($image)){
+          if($image_size > 2000000){
+             $message[] = 'Image size is too large!';
+          }else{
+             $update_image = $conn->prepare("UPDATE `products` SET image = ? WHERE id = ?");
+             $update_image->execute([$image, $pid]);
+             move_uploaded_file($image_tmp_name, $image_folder);
+             unlink('../uploaded_img/'.$old_image);
+             $message[] = 'Image updated!';
+          }
+       }
    }
 
+   $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Regenerate CSRF token
 }
+
 
 ?>
 
@@ -82,13 +92,14 @@ if(isset($_POST['update'])){
          while($fetch_products = $show_products->fetch(PDO::FETCH_ASSOC)){  
    ?>
    <form action="" method="POST" enctype="multipart/form-data">
+   <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
       <input type="hidden" name="pid" value="<?= $fetch_products['id']; ?>">
       <input type="hidden" name="old_image" value="<?= $fetch_products['image']; ?>">
       <img src="../uploaded_img/<?= $fetch_products['image']; ?>" alt="">
       <span>Update name</span>
       <input type="text" required placeholder="Enter product name" name="name" maxlength="100" class="box" value="<?= $fetch_products['name']; ?>">
       <span>Update price</span>
-      <input type="number" min="0" max="9999999999" required placeholder="Enter product price" name="price" onkeypress="if(this.value.length == 10) return false;" class="box" value="<?= $fetch_products['price']; ?>">
+      <input type="number" min="1" max="999999" required placeholder="Enter product price" name="price" onkeypress="if(this.value.length == 10) return false;" class="box" value="<?= $fetch_products['price']; ?>">
       <span>Update category</span>
       <select name="category" class="box" required>
          <option selected value="<?= $fetch_products['category']; ?>"><?= $fetch_products['category']; ?></option>

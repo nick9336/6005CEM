@@ -1,5 +1,4 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
@@ -10,7 +9,29 @@ if (!isset($rest_id)) {
     header('location:rest_login.php');
 }
 
+function validateInput($input, $filterType) {
+    $input = trim($input);
+    $input = stripslashes($input);
+    $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+    if ($filterType === FILTER_VALIDATE_INT) {
+        $input = filter_var($input, $filterType, array("options" => array("min_range" => 0, "max_range" => 9999999999)));
+    } else {
+        $input = filter_var($input, $filterType);
+    }
+    return $input;
+}
+
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['add_table'])) {
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token mismatch");
+    }
+
     $table = $_POST['table'];
     $table = filter_var($table, FILTER_SANITIZE_STRING);
     $capacity = $_POST['capacity'];
@@ -32,12 +53,16 @@ if (isset($_POST['add_table'])) {
 }
 
 if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf_token'], $_GET['csrf_token'])) {
+        die("CSRF token mismatch");
+    }
+
+    $delete_id = validateInput($_GET['delete'], FILTER_VALIDATE_INT);
     $delete_table = $conn->prepare("DELETE FROM `tables` WHERE `id` = ?");
     $delete_table->execute([$delete_id]);
     header('location:manage_tables.php');
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -64,8 +89,9 @@ if (isset($_GET['delete'])) {
     <section class="add-products">
 
         <form action="" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             <h3>Add table</h3>
-            <input type="text" required placeholder="Enter table" name="table" maxlength="100" class="box">
+            <input type="number" required placeholder="Enter table" name="table" maxlength="100" class="box">
             <input type="number" min="0" max="9999999999" required placeholder="Enter capacity" name="capacity"
                 onkeypress="if(this.value.length == 10) return false;" class="box">
             <select name="status" class="box" required>
@@ -96,7 +122,7 @@ if (isset($_GET['delete'])) {
                         <div class="name"><span>Table No: </span><?= $fetch_tables['table']; ?></div>
                         <div class="flex-btn">
                             <a href="update_table.php?update=<?= $fetch_tables['id']; ?>" class="option-btn">update</a>
-                            <a href="manage_tables.php?delete=<?= $fetch_tables['id']; ?>" class="delete-btn"
+                            <a href="manage_tables.php?delete=<?= $fetch_tables['id']; ?>&csrf_token=<?= $_SESSION['csrf_token']; ?>" class="delete-btn"
                                 onclick="return confirm('Delete this table?');">delete</a>
                         </div>
                     </div>

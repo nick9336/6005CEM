@@ -10,7 +10,17 @@ if (!isset($rest_id)) {
     header('location:rest_login.php');
 }
 
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['update_payment'])) {
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token mismatch");
+    }
+
     $order_id = filter_var($_POST['order_id'], FILTER_VALIDATE_INT);
     $payment_status = filter_var($_POST['payment_status'], FILTER_SANITIZE_STRING);
 
@@ -67,15 +77,16 @@ if (isset($_POST['update_payment'])) {
       <p> Total price : <span>RM<?= $fetch_orders['total_price']; ?>/-</span> </p>
       <p> Payment method : <span><?= $fetch_orders['method']; ?></span> </p>
       <form action="" method="POST">
-         <input type="hidden" name="order_id" value="<?= $fetch_orders['id']; ?>">
-         <select name="payment_status" class="drop-down">
-            <option value="" selected disabled><?= $fetch_orders['payment_status']; ?></option>
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-         </select>
-         <div class="flex-btn">
-            <input type="submit" value="update" class="btn" name="update_payment">
-         </div>
+      <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
+      <input type="hidden" name="order_id" value="<?= $fetch_orders['id']; ?>">
+      <select name="payment_status" class="drop-down">
+         <option value="" selected disabled><?= $fetch_orders['payment_status']; ?></option>
+         <option value="Pending">Pending</option>
+         <option value="Completed">Completed</option>
+      </select>
+      <div class="flex-btn">
+         <input type="submit" value="update" class="btn" name="update_payment">
+      </div>
       </form>
    </div>
    <?php

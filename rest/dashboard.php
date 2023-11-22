@@ -1,5 +1,4 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
@@ -8,6 +7,11 @@ $rest_id = $_SESSION['rest_id'];
 
 if(!isset($rest_id)){
    header('location:rest_login.php');
+}
+
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 
@@ -36,7 +40,8 @@ if(!isset($rest_id)){
 
    <h1 class="heading">Welcome Employee: <?= $fetch_profile['name']; ?></h1>
 
-   <div class="box-container">
+<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+<div class="box-container">
  
 
    <div class="box">
@@ -116,8 +121,10 @@ if(!isset($rest_id)){
       <h3><?= $numbers_of_messages; ?></h3>
       <p>Messages</p>
    </div>
+   
+</div>
 
-   </div>
+
 
 </section>
 

@@ -10,7 +10,17 @@ if (!isset($rest_id)) {
     header('location:rest_login.php');
 }
 
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['update_reservation'])) {
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token mismatch");
+    }
+
     $reservation_id = filter_var($_POST['reservation_id'], FILTER_VALIDATE_INT);
     $reservation_status = filter_var($_POST['reservation_status'], FILTER_SANITIZE_STRING);
 
@@ -67,7 +77,8 @@ if (isset($_POST['update_reservation'])) {
       <p> Number : <span><?= $fetch_reservations['contact_no']; ?></span> </p>
       <p> Pax : <span><?= $fetch_reservations['pax']; ?></span> </p>
       <form action="" method="POST">
-         <input type="hidden" name="reservation_id" value="<?= $fetch_reservations['id']; ?>">
+      <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
+      <input type="hidden" name="reservation_id" value="<?= $fetch_reservations['id']; ?>">
          <select name="reservation_status" class="drop-down">
             <option value="" selected disabled><?= $fetch_reservations['reservation_status']; ?></option>
             <option value="Pending">Pending</option>

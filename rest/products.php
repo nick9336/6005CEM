@@ -1,5 +1,4 @@
 <?php
-
 include '../components/connect.php';
 
 session_start();
@@ -10,10 +9,19 @@ if (!isset($rest_id)) {
     header('location:rest_login.php');
 }
 
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_POST['add_product'])) {
-    $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
-    $price = filter_var($_POST['price'], FILTER_VALIDATE_FLOAT);
-    $category = filter_var($_POST['category'], FILTER_SANITIZE_STRING);
+   if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+       // CSRF token is not valid, handle the error (log, redirect, etc.)
+       $message[] = 'Invalid CSRF token. Please try again.';
+   } else {
+       $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
+       $price = filter_var($_POST['price'], FILTER_VALIDATE_FLOAT);
+       $category = filter_var($_POST['category'], FILTER_SANITIZE_STRING);
 
     // Validate the file upload
     if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
@@ -25,25 +33,36 @@ if (isset($_POST['add_product'])) {
         $image_folder = '../uploaded_img/' . $image;
 
         if ($image_size > 2000000) {
-            $message[] = 'Image size is too large';
-        } else {
-            move_uploaded_file($image_tmp_name, $image_folder);
-
-            $select_products = $conn->prepare("SELECT * FROM `products` WHERE name = ?");
-            $select_products->execute([$name]);
-
-            if ($select_products->rowCount() > 0) {
-                $message[] = 'Product already exists!';
-            } else {
-                $insert_product = $conn->prepare("INSERT INTO `products`(name, category, price, image) VALUES(?,?,?,?)");
-                $insert_product->execute([$name, $category, $price, $image]);
-
-                $message[] = 'New product added!';
-            }
-        }
+         $message[] = 'Image size is too large';
+     } else {
+         // Ensure the uploaded_img directory exists
+         if (!file_exists('../uploaded_img/')) {
+             mkdir('../uploaded_img/');
+         }
+     
+         // Move the uploaded file to the correct destination
+         if (move_uploaded_file($image_tmp_name, $image_folder)) {
+             // Check if the product already exists
+             $select_products = $conn->prepare("SELECT * FROM `products` WHERE name = ?");
+             $select_products->execute([$name]);
+     
+             if ($select_products->rowCount() > 0) {
+                 $message[] = 'Product already exists!';
+             } else {
+                 // Insert the new product into the database
+                 $insert_product = $conn->prepare("INSERT INTO `products`(name, category, price, image) VALUES(?,?,?,?)");
+                 $insert_product->execute([$name, $category, $price, $image]);
+     
+                 $message[] = 'New product added!';
+             }
+         } else {
+             $message[] = 'Failed to move the uploaded file.';
+         }
+     }
     }
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+   }
 }
-
 if (isset($_GET['delete'])) {
     $delete_id = $_GET['delete'];
     $delete_product_image = $conn->prepare("SELECT * FROM `products` WHERE id = ?");
@@ -54,8 +73,11 @@ if (isset($_GET['delete'])) {
     $delete_product->execute([$delete_id]);
     $delete_cart = $conn->prepare("DELETE FROM `cart` WHERE pid = ?");
     $delete_cart->execute([$delete_id]);
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
     header('location:products.php');
 }
+
 
 ?>
 
@@ -81,11 +103,12 @@ if (isset($_GET['delete'])) {
 <!-- add products section starts  -->
 
 <section class="add-products">
-
    <form action="" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
       <h3>Add product</h3>
       <input type="text" required placeholder="Enter product name" name="name" maxlength="100" class="box">
-      <input type="number" min="1" max="9999999999" required placeholder="Enter product price" name="price" onkeypress="if(this.value.length == 10) return false;" class="box">
+      <!-- Update input type to "number" for decimal values -->
+      <input type="number" step="any" required placeholder="Enter product price" name="price" class="box" min="1" max="999999">
       <select name="category" class="box" required>
          <option value="" disabled selected>Select category --</option>
          <option value="Main Course">Main Course</option>
@@ -95,7 +118,6 @@ if (isset($_GET['delete'])) {
       <input type="file" name="image" class="box" accept="image/jpg, image/jpeg, image/png, image/webp" required>
       <input type="submit" value="add product" name="add_product" class="btn">
    </form>
-
 </section>
 
 <!-- add products section ends -->
@@ -114,7 +136,7 @@ if (isset($_GET['delete'])) {
          while($fetch_products = $show_products->fetch(PDO::FETCH_ASSOC)){  
    ?>
    <div class="box">
-      <img src="../project images/uploaded_img/<?= $fetch_products['image']; ?>" alt="">
+      <img src="../uploaded_img/<?= $fetch_products['image']; ?>" alt="">
       <div class="flex">
          <div class="price"><span>RM</span><?= $fetch_products['price']; ?></div>
          <div class="category"><?= $fetch_products['category']; ?></div>
